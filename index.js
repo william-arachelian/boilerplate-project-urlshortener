@@ -27,22 +27,22 @@ app.get('/', function(req, res) {
 // Your first API endpoint
 app.post('/api/shorturl', async function(req, res) {
   try {
-    let url = new URL(req.body.url);
-    
-    let search = await urls.findOne({original_url: url.href});
+    if (req.body.url.match("http://") == null) throw "invalid url";
+     
+    let search = await urls.findOne({original_url: req.body.url});
     if (search) {
       return res.json({original_url: search.original_url, short_url: search.short_url}); 
     }
 
-    let dbcount = await urls.countDocuments();
-    let newUrl = {original_url: url.href, short_url: dbcount};
+    let dbcount = await urls.countDocuments() + 1;
+    let newUrl = {original_url: req.body.url, short_url: dbcount};
     let results = await urls.insertOne(newUrl);
 
     if(!results) throw "Insert Failed";
     return res.json({original_url: newUrl.original_url, short_url: newUrl.short_url});
      
   } catch(e) {
-    return res.json({error: "invalid url"})
+    return res.json({error: e})
   }
 });
 app.get('/api/shorturl/:shorturl', async function(req, res) {
